@@ -8,24 +8,25 @@ export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const register = useAuthStore((s) => s.register);
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const set = (field: string, value: string) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: '' }));
-  };
+  const clearError = (field: string) =>
+    setErrors((prev) => ({ ...prev, [field]: '' }));
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Full name is required';
-    if (!form.email.trim()) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email';
-    if (!form.password) e.password = 'Password is required';
-    else if (form.password.length < 6) e.password = 'Minimum 6 characters';
-    if (form.confirm !== form.password) e.confirm = 'Passwords do not match';
+    if (!name.trim()) e.name = 'Full name is required';
+    if (!email.trim()) e.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
+    if (!password) e.password = 'Password is required';
+    else if (password.length < 6) e.password = 'Minimum 6 characters';
+    if (confirm !== password) e.confirm = 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -35,7 +36,7 @@ export const SignUp: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     setTimeout(() => {
-      const result = register(form.name, form.email, form.password);
+      const result = register(name, email, password);
       setLoading(false);
       if (result.success) {
         toast.success('Account created! Welcome aboard.');
@@ -46,29 +47,10 @@ export const SignUp: React.FC = () => {
     }, 400);
   };
 
-  const Field = ({
-    label, field, type = 'text', placeholder, autoComplete,
-    extra,
-  }: {
-    label: string; field: string; type?: string; placeholder: string; autoComplete?: string;
-    extra?: React.ReactNode;
-  }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="relative">
-        <input
-          type={type}
-          autoComplete={autoComplete}
-          value={(form as any)[field]}
-          onChange={(e) => set(field, e.target.value)}
-          placeholder={placeholder}
-          className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${(form as any)[field] && errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200'} ${extra ? 'pr-11' : ''}`}
-        />
-        {extra}
-      </div>
-      {errors[field] && <p className="text-xs text-red-500 mt-1">{errors[field]}</p>}
-    </div>
-  );
+  const inputClass = (field: string) =>
+    `w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
+      errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200'
+    }`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -89,19 +71,55 @@ export const SignUp: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Create account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <Field label="Full name" field="name" placeholder="John Doe" autoComplete="name" />
-            <Field label="Email address" field="email" type="email" placeholder="you@example.com" autoComplete="email" />
 
+            {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Full name
+              </label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => { setName(e.target.value); clearError('name'); }}
+                placeholder="John Doe"
+                className={inputClass('name')}
+              />
+              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                placeholder="you@example.com"
+                className={inputClass('email')}
+              />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
               <div className="relative">
                 <input
+                  id="password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
-                  value={form.password}
-                  onChange={(e) => set('password', e.target.value)}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
                   placeholder="Min. 6 characters"
-                  className={`w-full border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.password ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+                  className={`${inputClass('password')} pr-11`}
                 />
                 <button
                   type="button"
@@ -112,40 +130,47 @@ export const SignUp: React.FC = () => {
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+
+              {/* Password strength */}
+              {password && (
+                <div className="flex items-center gap-1 mt-2">
+                  {[1, 2, 3, 4].map((lvl) => (
+                    <div
+                      key={lvl}
+                      className={`h-1 flex-1 rounded-full transition-colors ${
+                        password.length >= lvl * 3
+                          ? password.length >= 12 ? 'bg-green-500'
+                            : password.length >= 8 ? 'bg-yellow-400'
+                            : 'bg-red-400'
+                          : 'bg-gray-100'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs text-gray-400 ml-1 whitespace-nowrap">
+                    {password.length < 6 ? 'Too short' : password.length < 8 ? 'Weak' : password.length < 12 ? 'Good' : 'Strong'}
+                  </span>
+                </div>
+              )}
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+              <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm password
+              </label>
               <input
+                id="confirm"
                 type="password"
                 autoComplete="new-password"
-                value={form.confirm}
-                onChange={(e) => set('confirm', e.target.value)}
+                value={confirm}
+                onChange={(e) => { setConfirm(e.target.value); clearError('confirm'); }}
                 placeholder="Re-enter password"
-                className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.confirm ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+                className={inputClass('confirm')}
               />
               {errors.confirm && <p className="text-xs text-red-500 mt-1">{errors.confirm}</p>}
             </div>
 
-            {/* Password strength hint */}
-            {form.password && (
-              <div className="flex gap-1">
-                {[1, 2, 3, 4].map((lvl) => (
-                  <div
-                    key={lvl}
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      form.password.length >= lvl * 3
-                        ? form.password.length >= 12 ? 'bg-green-500' : form.password.length >= 8 ? 'bg-yellow-400' : 'bg-red-400'
-                        : 'bg-gray-100'
-                    }`}
-                  />
-                ))}
-                <span className="text-xs text-gray-400 ml-1">
-                  {form.password.length < 6 ? 'Too short' : form.password.length < 8 ? 'Weak' : form.password.length < 12 ? 'Good' : 'Strong'}
-                </span>
-              </div>
-            )}
-
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -156,7 +181,9 @@ export const SignUp: React.FC = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
-              ) : <UserPlus className="w-4 h-4" />}
+              ) : (
+                <UserPlus className="w-4 h-4" />
+              )}
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
