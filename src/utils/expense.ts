@@ -1,4 +1,4 @@
-import { parseISO, format, endOfWeek, startOfMonth, endOfMonth, getYear, getMonth, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
+import { parseISO, format, endOfWeek, startOfMonth, endOfMonth, getYear, getMonth, eachWeekOfInterval, eachMonthOfInterval, eachDayOfInterval } from 'date-fns';
 import type { Expense, DailySummary, WeeklySummary, MonthlySummary, YearlySummary, CategoryBreakdown, Category } from '../types';
 import { getWeekLabel, getMonthLabel, isInRange } from './date';
 import { CATEGORIES } from '../constants';
@@ -44,15 +44,34 @@ export const buildWeeklySummaries = (expenses: Expense[], year: number, month: n
 
   return weekStarts.map((ws) => {
     const we = endOfWeek(ws, { weekStartsOn: 1 });
-    const weekExpenses = expenses.filter((e) => isInRange(e.date, ws, we));
-    const dailies = groupByDate(weekExpenses);
+    // Clamp week boundaries to the month so expenses aren't double-counted across months
+    const clampedStart = ws < monthStart ? monthStart : ws;
+    const clampedEnd = we > monthEnd ? monthEnd : we;
+
+    const weekExpenses = expenses.filter((e) => isInRange(e.date, clampedStart, clampedEnd));
+
+    // Build daily summaries for every day in the clamped week range
+    const days = eachDayOfInterval({ start: clampedStart, end: clampedEnd });
+    const dailySummaries: DailySummary[] = days
+      .map((day) => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const dayExpenses = weekExpenses.filter((e) => e.date === dateStr);
+        return {
+          date: dateStr,
+          total: dayExpenses.reduce((s, e) => s + e.amount, 0),
+          count: dayExpenses.length,
+          expenses: dayExpenses.sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        };
+      })
+      .filter((d) => d.count > 0); // only days with expenses
+
     return {
-      weekStart: format(ws, 'yyyy-MM-dd'),
-      weekEnd: format(we, 'yyyy-MM-dd'),
+      weekStart: format(clampedStart, 'yyyy-MM-dd'),
+      weekEnd: format(clampedEnd, 'yyyy-MM-dd'),
       weekLabel: getWeekLabel(ws),
       total: weekExpenses.reduce((s, e) => s + e.amount, 0),
       count: weekExpenses.length,
-      dailySummaries: dailies,
+      dailySummaries,
       categoryBreakdown: buildCategoryBreakdown(weekExpenses),
     };
   });
@@ -66,6 +85,7 @@ export const buildMonthlySummaries = (expenses: Expense[], year: number): Monthl
   return monthStarts.map((ms) => {
     const me = endOfMonth(ms);
     const month = getMonth(ms);
+    // Filter by date string prefix for accuracy
     const monthExpenses = expenses.filter((e) => isInRange(e.date, ms, me));
     return {
       year,
