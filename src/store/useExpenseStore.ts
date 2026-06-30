@@ -1,13 +1,14 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Expense, ExpenseFormData, FilterState } from '../types';
 import { generateId } from '../utils/expense';
-import { LOCAL_STORAGE_KEY } from '../constants';
+import { userExpenseKey } from '../utils/auth';
+import { useAuthStore } from './useAuthStore';
 
 interface ExpenseState {
   expenses: Expense[];
   filters: FilterState;
 
+  loadForUser: (userId: string) => void;
   addExpense: (data: ExpenseFormData) => void;
   updateExpense: (id: string, data: ExpenseFormData) => void;
   deleteExpense: (id: string) => void;
@@ -24,45 +25,66 @@ const defaultFilters: FilterState = {
   searchQuery: '',
 };
 
-export const useExpenseStore = create<ExpenseState>()(
-  persist(
-    (set) => ({
-      expenses: [],
-      filters: defaultFilters,
+const loadExpenses = (userId: string): Expense[] => {
+  try {
+    return JSON.parse(localStorage.getItem(userExpenseKey(userId)) ?? '[]');
+  } catch {
+    return [];
+  }
+};
 
-      addExpense: (data) => {
-        const now = new Date().toISOString();
-        const expense: Expense = {
-          ...data,
-          id: generateId(),
-          createdAt: now,
-          updatedAt: now,
-        };
-        set((state) => ({ expenses: [expense, ...state.expenses] }));
-      },
+const saveExpenses = (userId: string, expenses: Expense[]) => {
+  localStorage.setItem(userExpenseKey(userId), JSON.stringify(expenses));
+};
 
-      updateExpense: (id, data) => {
-        set((state) => ({
-          expenses: state.expenses.map((e) =>
-            e.id === id ? { ...e, ...data, updatedAt: new Date().toISOString() } : e
-          ),
-        }));
-      },
+const getCurrentUserId = (): string | null =>
+  useAuthStore.getState().user?.id ?? null;
 
-      deleteExpense: (id) => {
-        set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
-      },
+export const useExpenseStore = create<ExpenseState>()((set, get) => ({
+  expenses: [],
+  filters: defaultFilters,
 
-      setFilters: (filters) => {
-        set((state) => ({ filters: { ...state.filters, ...filters } }));
-      },
+  loadForUser: (userId) => {
+    set({ expenses: loadExpenses(userId), filters: defaultFilters });
+  },
 
-      resetFilters: () => set({ filters: defaultFilters }),
+  addExpense: (data) => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    const now = new Date().toISOString();
+    const expense: Expense = { ...data, id: generateId(), createdAt: now, updatedAt: now };
+    const next = [expense, ...get().expenses];
+    saveExpenses(userId, next);
+    set({ expenses: next });
+  },
 
-      importExpenses: (expenses) => set({ expenses }),
-    }),
-    {
-      name: LOCAL_STORAGE_KEY,
-    }
-  )
-);
+  updateExpense: (id, data) => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    const next = get().expenses.map((e) =>
+      e.id === id ? { ...e, ...data, updatedAt: new Date().toISOString() } : e
+    );
+    saveExpenses(userId, next);
+    set({ expenses: next });
+  },
+
+  deleteExpense: (id) => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    const next = get().expenses.filter((e) => e.id !== id);
+    saveExpenses(userId, next);
+    set({ expenses: next });
+  },
+
+  setFilters: (filters) =>
+    set((state) => ({ filters: { ...state.filters, ...filters } })),
+
+  resetFilters: () => set({ filters: defaultFilters }),
+
+  importExpenses: (expenses) => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    saveExpenses(userId, expenses);
+    set({ expenses });
+  },
+}));
