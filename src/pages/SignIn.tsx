@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -6,20 +6,21 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export const SignIn: React.FC = () => {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
+  const login = useAuthStore(useCallback((s) => s.login, []));
 
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [showPwd,  setShowPwd]  = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [emailErr,    setEmailErr]    = useState('');
+  const [passwordErr, setPasswordErr] = useState('');
 
   const validate = () => {
-    const e: typeof errors = {};
-    if (!form.email.trim()) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email';
-    if (!form.password) e.password = 'Password is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    let ok = true;
+    if (!email.trim())                        { setEmailErr('Email is required');    ok = false; } else setEmailErr('');
+    if (!/\S+@\S+\.\S+/.test(email))         { setEmailErr('Enter a valid email');  ok = false; }
+    if (!password)                            { setPasswordErr('Password is required'); ok = false; } else setPasswordErr('');
+    return ok;
   };
 
   const handleSubmit = (ev: React.FormEvent) => {
@@ -27,7 +28,7 @@ export const SignIn: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     setTimeout(() => {
-      const result = login(form.email, form.password);
+      const result = login(email, password);
       setLoading(false);
       if (result.success) {
         toast.success('Welcome back!');
@@ -56,62 +57,72 @@ export const SignIn: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Welcome back</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} noValidate>
+
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+            <div className="mb-4">
+              <label htmlFor="signin-email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
+              </label>
               <input
+                id="signin-email"
+                name="email"
                 type="email"
                 autoComplete="email"
-                value={form.email}
-                onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setErrors((er) => ({ ...er, email: undefined })); }}
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 placeholder="you@example.com"
-                className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.email ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setEmailErr(''); }}
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${emailErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
               />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+              {emailErr && <p className="text-xs text-red-500 mt-1">{emailErr}</p>}
             </div>
 
             {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="mb-6">
+              <label htmlFor="signin-password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
               <div className="relative">
                 <input
+                  id="signin-password"
+                  name="password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="current-password"
-                  value={form.password}
-                  onChange={(e) => { setForm((f) => ({ ...f, password: e.target.value })); setErrors((er) => ({ ...er, password: undefined })); }}
                   placeholder="••••••••"
-                  className={`w-full border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.password ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setPasswordErr(''); }}
+                  className={`w-full border rounded-xl px-4 py-3 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${passwordErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
                 >
                   {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+              {passwordErr && <p className="text-xs text-red-500 mt-1">{passwordErr}</p>}
             </div>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-              ) : <LogIn className="w-4 h-4" />}
+              {loading
+                ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                : <LogIn className="w-4 h-4" />
+              }
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
           Don't have an account?{' '}
           <Link to="/signup" className="text-primary-600 font-semibold hover:text-primary-700">

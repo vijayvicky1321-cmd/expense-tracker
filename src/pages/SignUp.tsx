@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -6,29 +6,29 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
-  const register = useAuthStore((s) => s.register);
+  const register = useAuthStore(useCallback((s) => s.register, []));
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirm, setConfirm]   = useState('');
+  const [showPwd, setShowPwd]   = useState(false);
+  const [loading, setLoading]   = useState(false);
 
-  const clearError = (field: string) =>
-    setErrors((prev) => ({ ...prev, [field]: '' }));
+  const [nameErr,     setNameErr]     = useState('');
+  const [emailErr,    setEmailErr]    = useState('');
+  const [passwordErr, setPasswordErr] = useState('');
+  const [confirmErr,  setConfirmErr]  = useState('');
 
   const validate = () => {
-    const e: Record<string, string> = {};
-    if (!name.trim()) e.name = 'Full name is required';
-    if (!email.trim()) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
-    if (!password) e.password = 'Password is required';
-    else if (password.length < 6) e.password = 'Minimum 6 characters';
-    if (confirm !== password) e.confirm = 'Passwords do not match';
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    let ok = true;
+    if (!name.trim())                          { setNameErr('Full name is required');       ok = false; } else setNameErr('');
+    if (!email.trim())                         { setEmailErr('Email is required');          ok = false; }
+    else if (!/\S+@\S+\.\S+/.test(email))     { setEmailErr('Enter a valid email');        ok = false; } else setEmailErr('');
+    if (!password)                             { setPasswordErr('Password is required');    ok = false; }
+    else if (password.length < 6)             { setPasswordErr('Minimum 6 characters');    ok = false; } else setPasswordErr('');
+    if (confirm !== password)                  { setConfirmErr('Passwords do not match');   ok = false; } else setConfirmErr('');
+    return ok;
   };
 
   const handleSubmit = (ev: React.FormEvent) => {
@@ -47,10 +47,14 @@ export const SignUp: React.FC = () => {
     }, 400);
   };
 
-  const inputClass = (field: string) =>
-    `w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-      errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200'
-    }`;
+  const strengthLevel =
+    password.length === 0 ? 0 :
+    password.length < 6   ? 1 :
+    password.length < 8   ? 2 :
+    password.length < 12  ? 3 : 4;
+
+  const strengthLabel = ['', 'Too short', 'Weak', 'Good', 'Strong'][strengthLevel];
+  const strengthColor = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'][strengthLevel];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -70,120 +74,119 @@ export const SignUp: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Create account</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} noValidate>
 
             {/* Full Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-4">
+              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-700 mb-1">
                 Full name
               </label>
               <input
-                id="name"
+                id="signup-name"
+                name="name"
                 type="text"
                 autoComplete="name"
-                value={name}
-                onChange={(e) => { setName(e.target.value); clearError('name'); }}
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
                 placeholder="John Doe"
-                className={inputClass('name')}
+                value={name}
+                onChange={(e) => { setName(e.target.value); setNameErr(''); }}
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${nameErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
               />
-              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+              {nameErr && <p className="text-xs text-red-500 mt-1">{nameErr}</p>}
             </div>
 
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-4">
+              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email address
               </label>
               <input
-                id="email"
+                id="signup-email"
+                name="email"
                 type="email"
                 autoComplete="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 placeholder="you@example.com"
-                className={inputClass('email')}
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setEmailErr(''); }}
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${emailErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
               />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+              {emailErr && <p className="text-xs text-red-500 mt-1">{emailErr}</p>}
             </div>
 
             {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-4">
+              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <div className="relative">
                 <input
-                  id="password"
+                  id="signup-password"
+                  name="password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
                   placeholder="Min. 6 characters"
-                  className={`${inputClass('password')} pr-11`}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setPasswordErr(''); }}
+                  className={`w-full border rounded-xl px-4 py-3 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${passwordErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
                 >
                   {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+              {passwordErr && <p className="text-xs text-red-500 mt-1">{passwordErr}</p>}
 
-              {/* Password strength */}
-              {password && (
+              {/* Strength bar */}
+              {password.length > 0 && (
                 <div className="flex items-center gap-1 mt-2">
                   {[1, 2, 3, 4].map((lvl) => (
                     <div
                       key={lvl}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        password.length >= lvl * 3
-                          ? password.length >= 12 ? 'bg-green-500'
-                            : password.length >= 8 ? 'bg-yellow-400'
-                            : 'bg-red-400'
-                          : 'bg-gray-100'
-                      }`}
+                      className={`h-1 flex-1 rounded-full ${lvl <= strengthLevel ? strengthColor : 'bg-gray-100'}`}
                     />
                   ))}
-                  <span className="text-xs text-gray-400 ml-1 whitespace-nowrap">
-                    {password.length < 6 ? 'Too short' : password.length < 8 ? 'Weak' : password.length < 12 ? 'Good' : 'Strong'}
-                  </span>
+                  <span className="text-xs text-gray-400 ml-1 w-16 text-right">{strengthLabel}</span>
                 </div>
               )}
             </div>
 
             {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-6">
+              <label htmlFor="signup-confirm" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm password
               </label>
               <input
-                id="confirm"
+                id="signup-confirm"
+                name="confirm"
                 type="password"
                 autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => { setConfirm(e.target.value); clearError('confirm'); }}
                 placeholder="Re-enter password"
-                className={inputClass('confirm')}
+                value={confirm}
+                onChange={(e) => { setConfirm(e.target.value); setConfirmErr(''); }}
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow ${confirmErr ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}`}
               />
-              {errors.confirm && <p className="text-xs text-red-500 mt-1">{errors.confirm}</p>}
+              {confirmErr && <p className="text-xs text-red-500 mt-1">{confirmErr}</p>}
             </div>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-              ) : (
-                <UserPlus className="w-4 h-4" />
-              )}
+              {loading
+                ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                : <UserPlus className="w-4 h-4" />
+              }
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
