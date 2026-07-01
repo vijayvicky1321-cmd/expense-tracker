@@ -42,14 +42,21 @@ export const SignUp: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       const code = err?.code ?? '';
+      console.error('SignUp error:', code, err?.message, err);
       if (code === 'auth/email-already-in-use')
         toast.error('An account with this email already exists.');
       else if (code === 'auth/invalid-email')
         toast.error('Invalid email address.');
       else if (code === 'auth/weak-password')
         toast.error('Password is too weak. Use at least 6 characters.');
+      else if (code === 'auth/network-request-failed')
+        toast.error('Network error. Check your internet connection.');
+      else if (code === 'auth/operation-not-allowed')
+        toast.error('Email/password sign-in is not enabled. Contact support.');
+      else if (code === 'auth/configuration-not-found')
+        toast.error('Firebase not configured. Contact support.');
       else
-        toast.error('Registration failed. Please try again.');
+        toast.error(`Registration failed: ${code || err?.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
