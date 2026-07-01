@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/expense-tracker/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExpenseTracker</title>
+    <script>
+      // Restore path from GitHub Pages 404 redirect
+      (function () {
+        var p = window.location.search.match(/[?&]p=([^&]+)/);
+        if (p) {
+          var path = decodeURIComponent(p[1]);
+          // Replace query string with clean URL using history API
+          window.history.replaceState(
+            null, null,
+            window.location.pathname + (path ? '/' + path : '')
+          );
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/expense-tracker/assets/index-DnZqEQON.js"></script>
+    <link rel="stylesheet" crossorigin href="/expense-tracker/assets/index-C0SHbRAs.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
