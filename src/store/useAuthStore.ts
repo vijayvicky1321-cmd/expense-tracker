@@ -1,60 +1,26 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { AuthState, User } from '../types/auth';
-import { findUserByEmail, createUser, verifyPassword } from '../utils/auth';
+import { auth } from '../lib/firebase';
+import type firebase from 'firebase/compat/app';
 
-const AUTH_SESSION_KEY = 'et_session';
+interface AuthState {
+  user: firebase.User | null;
+  isAuthenticated: boolean;
+  loading: boolean;                // true while Firebase resolves initial auth state
+  setUser: (user: firebase.User | null) => void;
+  setLoading: (v: boolean) => void;
+  logout: () => Promise<void>;
+}
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  isAuthenticated: false,
+  loading: true,
 
-      login: (email, password) => {
-        const stored = findUserByEmail(email);
-        if (!stored) {
-          return { success: false, error: 'No account found with this email.' };
-        }
-        if (!verifyPassword(password, stored.passwordHash)) {
-          return { success: false, error: 'Incorrect password.' };
-        }
-        const user: User = {
-          id: stored.id,
-          name: stored.name,
-          email: stored.email,
-          createdAt: stored.createdAt,
-        };
-        set({ user, isAuthenticated: true });
-        return { success: true };
-      },
+  setUser: (user) => set({ user, isAuthenticated: !!user, loading: false }),
+  setLoading: (loading) => set({ loading }),
 
-      register: (name, email, password) => {
-        if (!name.trim()) return { success: false, error: 'Name is required.' };
-        if (!email.trim()) return { success: false, error: 'Email is required.' };
-        if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters.' };
-        const existing = findUserByEmail(email);
-        if (existing) return { success: false, error: 'An account with this email already exists.' };
-
-        const stored = createUser(name, email, password);
-        const user: User = {
-          id: stored.id,
-          name: stored.name,
-          email: stored.email,
-          createdAt: stored.createdAt,
-        };
-        set({ user, isAuthenticated: true });
-        return { success: true };
-      },
-
-      logout: () => {
-        set({ user: null, isAuthenticated: false });
-      },
-    }),
-    {
-      name: AUTH_SESSION_KEY,
-      // Only persist user identity, not actions
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
-    }
-  )
-);
+  logout: async () => {
+    await auth.signOut();
+    set({ user: null, isAuthenticated: false });
+  },
+}));

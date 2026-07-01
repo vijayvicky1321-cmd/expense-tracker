@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useExpenseStore } from '../../store/useExpenseStore';
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
-  const loadForUser = useExpenseStore((s) => s.loadForUser);
+  const { loadForUser, clearExpenses } = useExpenseStore();
 
-  React.useEffect(() => {
-    if (user) loadForUser(user.id);
-  }, [user?.id]);
+  useEffect(() => {
+    if (user?.uid) {
+      loadForUser(user.uid);
+    } else {
+      clearExpenses();
+    }
+  }, [user?.uid]);
 
   if (!isAuthenticated) return <Navigate to="/signin" replace />;
   return <Outlet />;

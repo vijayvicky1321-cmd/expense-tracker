@@ -11,9 +11,9 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ title, subtitle, onMenuToggle, onAddExpense }) => {
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const resetFilters = useExpenseStore((s) => s.resetFilters);
+  const user    = useAuthStore((s) => s.user);
+  const logout  = useAuthStore((s) => s.logout);
+  const clearExpenses = useExpenseStore((s) => s.clearExpenses);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -25,14 +25,18 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onMenuToggle, o
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleLogout = () => {
-    resetFilters();
-    logout();
+  const handleLogout = async () => {
+    clearExpenses();
+    await logout();
   };
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
+  const displayName = user?.displayName ?? user?.email ?? 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center gap-4 sticky top-0 z-30">
@@ -69,8 +73,8 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onMenuToggle, o
               {initials}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium text-gray-900 leading-none">{user?.name}</p>
-              <p className="text-xs text-gray-400 leading-none mt-0.5 truncate max-w-[120px]">{user?.email}</p>
+              <p className="text-sm font-medium text-gray-900 leading-none">{displayName}</p>
+              <p className="text-xs text-gray-400 leading-none mt-0.5 truncate max-w-[140px]">{user?.email}</p>
             </div>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -78,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onMenuToggle, o
           {menuOpen && (
             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
               <div className="px-4 py-3 border-b border-gray-50">
-                <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+                <p className="text-sm font-semibold text-gray-900">{displayName}</p>
                 <p className="text-xs text-gray-500 mt-0.5 truncate">{user?.email}</p>
               </div>
               <button

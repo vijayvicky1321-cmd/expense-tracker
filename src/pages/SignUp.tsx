@@ -1,19 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, Eye, EyeOff, UserPlus } from 'lucide-react';
-import { useAuthStore } from '../store/useAuthStore';
+import { auth } from '../lib/firebase';
 import toast, { Toaster } from 'react-hot-toast';
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
-  const register = useAuthStore(useCallback((s) => s.register, []));
 
-  const [name, setName]         = useState('');
-  const [email, setEmail]       = useState('');
+  const [name,     setName]     = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm]   = useState('');
-  const [showPwd, setShowPwd]   = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [confirm,  setConfirm]  = useState('');
+  const [showPwd,  setShowPwd]  = useState(false);
+  const [loading,  setLoading]  = useState(false);
 
   const [nameErr,     setNameErr]     = useState('');
   const [emailErr,    setEmailErr]    = useState('');
@@ -22,29 +21,38 @@ export const SignUp: React.FC = () => {
 
   const validate = () => {
     let ok = true;
-    if (!name.trim())                          { setNameErr('Full name is required');       ok = false; } else setNameErr('');
-    if (!email.trim())                         { setEmailErr('Email is required');          ok = false; }
-    else if (!/\S+@\S+\.\S+/.test(email))     { setEmailErr('Enter a valid email');        ok = false; } else setEmailErr('');
-    if (!password)                             { setPasswordErr('Password is required');    ok = false; }
-    else if (password.length < 6)             { setPasswordErr('Minimum 6 characters');    ok = false; } else setPasswordErr('');
-    if (confirm !== password)                  { setConfirmErr('Passwords do not match');   ok = false; } else setConfirmErr('');
+    if (!name.trim())                          { setNameErr('Full name is required');     ok = false; } else setNameErr('');
+    if (!email.trim())                         { setEmailErr('Email is required');        ok = false; }
+    else if (!/\S+@\S+\.\S+/.test(email))     { setEmailErr('Enter a valid email');      ok = false; } else setEmailErr('');
+    if (!password)                             { setPasswordErr('Password is required');  ok = false; }
+    else if (password.length < 6)             { setPasswordErr('Minimum 6 characters'); ok = false; } else setPasswordErr('');
+    if (confirm !== password)                  { setConfirmErr('Passwords do not match'); ok = false; } else setConfirmErr('');
     return ok;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      const result = register(name, email, password);
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email.trim(), password);
+      // Save display name to Firebase Auth profile
+      await cred.user?.updateProfile({ displayName: name.trim() });
+      toast.success('Account created! Welcome aboard.');
+      navigate('/');
+    } catch (err: any) {
+      const code = err?.code ?? '';
+      if (code === 'auth/email-already-in-use')
+        toast.error('An account with this email already exists.');
+      else if (code === 'auth/invalid-email')
+        toast.error('Invalid email address.');
+      else if (code === 'auth/weak-password')
+        toast.error('Password is too weak. Use at least 6 characters.');
+      else
+        toast.error('Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      if (result.success) {
-        toast.success('Account created! Welcome aboard.');
-        navigate('/');
-      } else {
-        toast.error(result.error ?? 'Registration failed');
-      }
-    }, 400);
+    }
   };
 
   const strengthLevel =
@@ -78,9 +86,7 @@ export const SignUp: React.FC = () => {
 
             {/* Full Name */}
             <div className="mb-4">
-              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full name
-              </label>
+              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
               <input
                 id="signup-name"
                 name="name"
@@ -99,9 +105,7 @@ export const SignUp: React.FC = () => {
 
             {/* Email */}
             <div className="mb-4">
-              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
-              </label>
+              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
               <input
                 id="signup-email"
                 name="email"
@@ -120,9 +124,7 @@ export const SignUp: React.FC = () => {
 
             {/* Password */}
             <div className="mb-4">
-              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <div className="relative">
                 <input
                   id="signup-password"
@@ -144,15 +146,10 @@ export const SignUp: React.FC = () => {
                 </button>
               </div>
               {passwordErr && <p className="text-xs text-red-500 mt-1">{passwordErr}</p>}
-
-              {/* Strength bar */}
               {password.length > 0 && (
                 <div className="flex items-center gap-1 mt-2">
                   {[1, 2, 3, 4].map((lvl) => (
-                    <div
-                      key={lvl}
-                      className={`h-1 flex-1 rounded-full ${lvl <= strengthLevel ? strengthColor : 'bg-gray-100'}`}
-                    />
+                    <div key={lvl} className={`h-1 flex-1 rounded-full transition-colors ${lvl <= strengthLevel ? strengthColor : 'bg-gray-100'}`} />
                   ))}
                   <span className="text-xs text-gray-400 ml-1 w-16 text-right">{strengthLabel}</span>
                 </div>
@@ -161,9 +158,7 @@ export const SignUp: React.FC = () => {
 
             {/* Confirm Password */}
             <div className="mb-6">
-              <label htmlFor="signup-confirm" className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm password
-              </label>
+              <label htmlFor="signup-confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
               <input
                 id="signup-confirm"
                 name="confirm"
@@ -185,8 +180,7 @@ export const SignUp: React.FC = () => {
             >
               {loading
                 ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
-                : <UserPlus className="w-4 h-4" />
-              }
+                : <UserPlus className="w-4 h-4" />}
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
@@ -194,9 +188,7 @@ export const SignUp: React.FC = () => {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{' '}
-          <Link to="/signin" className="text-primary-600 font-semibold hover:text-primary-700">
-            Sign in
-          </Link>
+          <Link to="/signin" className="text-primary-600 font-semibold hover:text-primary-700">Sign in</Link>
         </p>
       </div>
     </div>

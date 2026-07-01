@@ -1,12 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, Eye, EyeOff, LogIn } from 'lucide-react';
-import { useAuthStore } from '../store/useAuthStore';
+import { auth } from '../lib/firebase';
 import toast, { Toaster } from 'react-hot-toast';
 
 export const SignIn: React.FC = () => {
   const navigate = useNavigate();
-  const login = useAuthStore(useCallback((s) => s.login, []));
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -17,26 +16,33 @@ export const SignIn: React.FC = () => {
 
   const validate = () => {
     let ok = true;
-    if (!email.trim())                        { setEmailErr('Email is required');    ok = false; } else setEmailErr('');
-    if (!/\S+@\S+\.\S+/.test(email))         { setEmailErr('Enter a valid email');  ok = false; }
-    if (!password)                            { setPasswordErr('Password is required'); ok = false; } else setPasswordErr('');
+    if (!email.trim())                     { setEmailErr('Email is required');       ok = false; } else setEmailErr('');
+    if (!/\S+@\S+\.\S+/.test(email.trim())) { setEmailErr('Enter a valid email');    ok = false; }
+    if (!password)                          { setPasswordErr('Password is required'); ok = false; } else setPasswordErr('');
     return ok;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      const result = login(email, password);
+    try {
+      await auth.signInWithEmailAndPassword(email.trim(), password);
+      toast.success('Welcome back!');
+      navigate('/');
+    } catch (err: any) {
+      const code = err?.code ?? '';
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential')
+        toast.error('No account found with this email.');
+      else if (code === 'auth/wrong-password')
+        toast.error('Incorrect password.');
+      else if (code === 'auth/too-many-requests')
+        toast.error('Too many attempts. Please try again later.');
+      else
+        toast.error('Sign in failed. Please try again.');
+    } finally {
       setLoading(false);
-      if (result.success) {
-        toast.success('Welcome back!');
-        navigate('/');
-      } else {
-        toast.error(result.error ?? 'Login failed');
-      }
-    }, 400);
+    }
   };
 
   return (
@@ -116,8 +122,7 @@ export const SignIn: React.FC = () => {
             >
               {loading
                 ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
-                : <LogIn className="w-4 h-4" />
-              }
+                : <LogIn className="w-4 h-4" />}
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>

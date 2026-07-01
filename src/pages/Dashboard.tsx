@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CategoryPieChart } from '../components/charts/CategoryPieChart';
 import { SpendingBarChart } from '../components/charts/SpendingBarChart';
 import { useExpenseStore } from '../store/useExpenseStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { usePeriodExpenses, useCategoryBreakdown, useYearlySummary } from '../hooks/useExpenses';
 import { formatCurrency, formatDate } from '../utils/date';
 import type { Expense, ExpenseFormData } from '../types';
@@ -45,10 +46,11 @@ export const Dashboard: React.FC = () => {
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const addExpense = useExpenseStore((s) => s.addExpense);
+  const addExpense    = useExpenseStore((s) => s.addExpense);
   const updateExpense = useExpenseStore((s) => s.updateExpense);
   const deleteExpense = useExpenseStore((s) => s.deleteExpense);
-  const allExpenses = useExpenseStore((s) => s.expenses);
+  const allExpenses   = useExpenseStore((s) => s.expenses);
+  const uid = useAuthStore((s) => s.user?.uid ?? '');
 
   const periods = usePeriodExpenses();
   const currentYear = new Date().getFullYear();
@@ -62,26 +64,30 @@ export const Dashboard: React.FC = () => {
 
   const recentExpenses = allExpenses.slice(0, 8);
 
-  const handleAdd = (data: ExpenseFormData) => {
-    addExpense(data);
-    setAddOpen(false);
-    toast.success('Expense added successfully!');
+  const handleAdd = async (data: ExpenseFormData) => {
+    try {
+      await addExpense(data, uid);
+      setAddOpen(false);
+      toast.success('Expense added!');
+    } catch { toast.error('Failed to add expense.'); }
   };
 
-  const handleEdit = (data: ExpenseFormData) => {
-    if (editExpense) {
-      updateExpense(editExpense.id, data);
+  const handleEdit = async (data: ExpenseFormData) => {
+    if (!editExpense) return;
+    try {
+      await updateExpense(editExpense.id, data, uid);
       setEditExpense(null);
       toast.success('Expense updated!');
-    }
+    } catch { toast.error('Failed to update expense.'); }
   };
 
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteExpense(deleteId);
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteExpense(deleteId, uid);
       setDeleteId(null);
-      toast.success('Expense deleted.');
-    }
+      toast.success('Deleted.');
+    } catch { toast.error('Failed to delete expense.'); }
   };
 
   return (

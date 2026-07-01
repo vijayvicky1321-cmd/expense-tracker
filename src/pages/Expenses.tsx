@@ -13,6 +13,7 @@ import { ExpenseTable } from '../components/expense/ExpenseTable';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useExpenseStore } from '../store/useExpenseStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { useFilteredExpenses, useDailyGroups } from '../hooks/useExpenses';
 import { formatCurrency, formatDate } from '../utils/date';
 import { exportToCSV, exportToExcel, exportToPDF } from '../services/exportService';
@@ -27,34 +28,39 @@ export const Expenses: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const addExpense = useExpenseStore((s) => s.addExpense);
+  const addExpense    = useExpenseStore((s) => s.addExpense);
   const updateExpense = useExpenseStore((s) => s.updateExpense);
   const deleteExpense = useExpenseStore((s) => s.deleteExpense);
+  const uid = useAuthStore((s) => s.user?.uid ?? '');
 
   const filtered = useFilteredExpenses();
   const dailyGroups = useDailyGroups(filtered);
   const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0);
 
-  const handleAdd = (data: ExpenseFormData) => {
-    addExpense(data);
-    setAddOpen(false);
-    toast.success('Expense added!');
+  const handleAdd = async (data: ExpenseFormData) => {
+    try {
+      await addExpense(data, uid);
+      setAddOpen(false);
+      toast.success('Expense added!');
+    } catch { toast.error('Failed to add expense.'); }
   };
 
-  const handleEdit = (data: ExpenseFormData) => {
-    if (editExpense) {
-      updateExpense(editExpense.id, data);
+  const handleEdit = async (data: ExpenseFormData) => {
+    if (!editExpense) return;
+    try {
+      await updateExpense(editExpense.id, data, uid);
       setEditExpense(null);
       toast.success('Expense updated!');
-    }
+    } catch { toast.error('Failed to update expense.'); }
   };
 
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteExpense(deleteId);
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteExpense(deleteId, uid);
       setDeleteId(null);
       toast.success('Deleted.');
-    }
+    } catch { toast.error('Failed to delete.'); }
   };
 
   const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
