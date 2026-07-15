@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vijaykumar D — SOC Analyst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e12;
+    --panel:#10161d;
+    --panel-2:#151d25;
+    --line:#232d38;
+    --text:#d7dee5;
+    --muted:#7c8a99;
+    --amber:#e8a33d;
+    --amber-dim:#8a6423;
+    --teal:#35c9a5;
+    --teal-dim:#1f7a63;
+    --red:#e2574c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    line-height:1.6;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:var(--teal); text-decoration:none;}
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px;}
+
+  /* status bar */
+  .statusbar{
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .statusbar .wrap{display:flex; justify-content:space-between; align-items:center; height:38px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:8px; box-shadow:0 0 6px var(--teal);}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  .dot{animation:pulse 2s infinite;}
+
+  /* hero */
+  header.hero{padding:72px 0 56px; border-bottom:1px solid var(--line);}
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.08em; color:var(--amber); text-transform:uppercase; margin-bottom:18px;}
+  h1{font-size:40px; font-weight:700; letter-spacing:-.01em; margin-bottom:10px;}
+  .role{font-size:17px; color:var(--muted); margin-bottom:28px;}
+  .terminal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    max-width:640px;
+  }
+  .terminal-head{
+    display:flex; align-items:center; gap:6px;
+    padding:9px 12px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+  }
+  .terminal-head span{width:9px; height:9px; border-radius:50%; background:#3a4552;}
+  .terminal-body{padding:16px 18px; font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--teal);}
+  .terminal-body .p{color:var(--muted);}
+  .cursor{display:inline-block; width:7px; height:14px; background:var(--teal); vertical-align:middle; animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .cta-row{margin-top:28px; display:flex; gap:12px; flex-wrap:wrap;}
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:10px 18px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    color:var(--text);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn.primary{background:var(--amber); color:#241804; border-color:var(--amber); font-weight:600;}
+  .btn:hover{border-color:var(--teal);}
+  .btn.primary:hover{opacity:.9; border-color:var(--amber);}
+
+  section{padding:56px 0; border-bottom:1px solid var(--line);}
+  .sec-label{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--amber); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;}
+  h2{font-size:24px; font-weight:600; margin-bottom:28px;}
+
+  /* summary */
+  .summary p{color:var(--text); font-size:15.5px; max-width:720px;}
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:32px;}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:18px;}
+  .stat .num{font-family:'IBM Plex Mono', monospace; font-size:26px; color:var(--teal); font-weight:600;}
+  .stat .label{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  /* experience */
+  .job{padding:22px 0; border-top:1px solid var(--line);}
+  .job:first-of-type{border-top:none;}
+  .job-top{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .job-title{font-weight:600; font-size:16px;}
+  .job-dates{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted);}
+  .job-org{color:var(--teal); font-size:13.5px; margin-bottom:10px;}
+  .job ul{padding-left:18px; color:var(--muted); font-size:14.5px;}
+  .job li{margin-bottom:6px;}
+  .job li::marker{color:var(--amber);}
+
+  /* skills */
+  .skill-grid{display:flex; flex-wrap:wrap; gap:10px;}
+  .skill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    padding:7px 12px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--text);
+    background:var(--panel);
+  }
+
+  /* projects */
+  .proj-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+  .proj{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .proj-top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .proj-name{font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600;}
+  .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    padding:3px 8px;
+    border-radius:3px;
+    color:#0a0e12;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .tag.ts{background:var(--teal);}
+  .tag.py{background:var(--amber);}
+  .tag.js{background:#f2c94c;}
+  .tag.html{background:#e2574c; color:#fff;}
+  .proj-desc{color:var(--muted); font-size:13.5px; flex-grow:1;}
+  .proj-link{font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--teal);}
+
+  /* contact */
+  .contact-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:600px;}
+  .contact-item{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:16px; font-family:'IBM Plex Mono', monospace; font-size:13.5px;
+  }
+  .contact-item .k{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+
+  footer{padding:32px 0; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted);}
+
+  @media(max-width:640px){
+    h1{font-size:30px;}
+    .stat-row{grid-template-columns:1fr;}
+    .proj-grid{grid-template-columns:1fr;}
+    .contact-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <div class="wrap">
+    <span><span class="dot"></span>SYSTEM STATUS: ACTIVE</span>
+    <span>UPTIME: 8.5+ YRS</span>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">// incident_response.log</div>
+    <h1>Vijaykumar D</h1>
+    <div class="role">SOC Analyst &nbsp;·&nbsp; Cybersecurity Professional &nbsp;·&nbsp; Hyderabad, India</div>
+
+    <div class="terminal">
+      <div class="terminal-head"><span></span><span></span><span></span></div>
+      <div class="terminal-body">
+        <div class="p">$ whoami</div>
+        <div>SOC Analyst — 8.5+ yrs IT · 5+ yrs cybersecurity ops</div>
+        <div class="p" style="margin-top:8px;">$ stack --active</div>
+        <div>Splunk ES · CrowdStrike Falcon EDR · Mandiant / Google SecOps</div>
+        <div class="p" style="margin-top:8px;">$ status<span class="cursor"></span></div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn primary" href="Vijaykumar_D_Resume.pdf" download><i></i>Download resume</a>
+      <a class="btn" href="https://github.com/vijayvicky1321-cmd" target="_blank">View GitHub ↗</a>
+      <a class="btn" href="mailto:dvijaykumar2128@gmail.com">Email me</a>
+    </div>
+  </div>
+</header>
+
+<section id="summary">
+  <div class="wrap">
+    <div class="sec-label">01 / Summary</div>
+    <h2>Threat detection, contained.</h2>
+    <div class="summary">
+      <p>Results-driven SOC Analyst with 8.5+ years of IT experience, including 5+ years specializing in cybersecurity operations, incident response, and threat detection. Proven expertise in Splunk Enterprise Security, CrowdStrike Falcon EDR, and Mandiant (Google) security platforms — identifying and mitigating advanced persistent threats and fileless malware using MITRE ATT&CK and Cyber Kill Chain frameworks.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num">150+</div><div class="label">Alerts triaged daily</div></div>
+      <div class="stat"><div class="num">25%</div><div class="label">MTTR reduction delivered</div></div>
+      <div class="stat"><div class="num">1,000+</div><div class="label">Endpoints administered</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="experience">
+  <div class="wrap">
+    <div class="sec-label">02 / Experience</div>
+    <h2>Where I've worked</h2>
+
+    <div class="job">
+      <div class="job-top">
+        <div class="job-title">Security Analyst — SOC (L2)</div>
+        <div class="job-dates">Aug 2023 – Feb 2026</div>
+      </div>
+      <div class="job-org">EPAM Systems India Pvt. Ltd. · Splunk / CrowdStrike Falcon EDR</div>
+      <ul>
+        <li>Monitored and triaged 150+ security alerts daily across Splunk ES and CrowdStrike Falcon, maintaining SLA compliance on P1/P2 incidents with under 30-minute response times.</li>
+        <li>Investigated and contained advanced malware including Emotet fileless malware using CrowdStrike RTR, isolating compromised endpoints and preventing lateral movement.</li>
+        <li>Tuned Splunk ES correlation searches, cutting false-positive alert volume by roughly 30%.</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-top">
+        <div class="job-title">Security Analyst — SOC / Google Mandiant (L2)</div>
+        <div class="job-dates">Mar 2022 – Aug 2023</div>
+      </div>
+      <div class="job-org">EPAM Systems India Pvt. Ltd. · Client: Google Inc.</div>
+      <ul>
+        <li>Provided 24x7 support for Google/Mandiant security products during their transition to Google Cloud Platform.</li>
+        <li>Managed provisioning for 100+ enterprise customers on Mandiant Advantage; recognized with Google's "Great Job!" Badge.</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-top">
+        <div class="job-title">SOC Analyst / Software Engineer</div>
+        <div class="job-dates">Feb 2021 – Dec 2021</div>
+      </div>
+      <div class="job-org">Crown Solution India Pvt. Ltd. · Splunk ES, ServiceNow</div>
+      <ul>
+        <li>Real-time 24x7 monitoring for a healthcare MSSP client; eliminated false positives via VirusTotal, URL Void, IP-Void reputation analysis.</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-top">
+        <div class="job-title">Java Developer</div>
+        <div class="job-dates">Dec 2019 – Oct 2020</div>
+      </div>
+      <div class="job-org">Group FIO India Pvt. Ltd. · Spring Boot, Groovy, JavaScript</div>
+      <ul>
+        <li>Built frontend and backend CRM modules for a major APAC bank's Microsoft Dynamics → OFBiz re-platforming project.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="wrap">
+    <div class="sec-label">03 / Skills</div>
+    <h2>Tools deployed</h2>
+    <div class="skill-grid">
+      <div class="skill">Splunk Enterprise Security</div>
+      <div class="skill">CrowdStrike Falcon EDR</div>
+      <div class="skill">Mandiant / Google SecOps</div>
+      <div class="skill">MITRE ATT&CK</div>
+      <div class="skill">Cyber Kill Chain</div>
+      <div class="skill">Incident Response</div>
+      <div class="skill">ServiceNow</div>
+      <div class="skill">VirusTotal / IOC Analysis</div>
+      <div class="skill">Java</div>
+      <div class="skill">Groovy</div>
+      <div class="skill">Spring Boot</div>
+      <div class="skill">Python</div>
+      <div class="skill">TypeScript / React</div>
+    </div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="wrap">
+    <div class="sec-label">04 / Projects</div>
+    <h2>From GitHub</h2>
+    <div class="proj-grid">
+
+      <div class="proj">
+        <div class="proj-top">
+          <div class="proj-name">expense-tracker</div>
+          <span class="tag ts">TS</span>
+        </div>
+        <div class="proj-desc">Production-ready personal expense tracking web app built with React, TypeScript, and Vite.</div>
+        <a class="proj-link" href="https://github.com/vijayvicky1321-cmd/expense-tracker" target="_blank">github.com/expense-tracker ↗</a>
+      </div>
+
+      <div class="proj">
+        <div class="proj-top">
+          <div class="proj-name">nexus-ai</div>
+          <span class="tag ts">TS</span>
+        </div>
+        <div class="proj-desc">TypeScript-based application exploring applied AI functionality.</div>
+        <a class="proj-link" href="https://github.com/vijayvicky1321-cmd/nexus-ai" target="_blank">github.com/nexus-ai ↗</a>
+      </div>
+
+      <div class="proj">
+        <div class="proj-top">
+          <div class="proj-name">pathfinder-ai</div>
+          <span class="tag py">PY</span>
+        </div>
+        <div class="proj-desc">Python project focused on pathfinding / AI-driven problem solving.</div>
+        <a class="proj-link" href="https://github.com/vijayvicky1321-cmd/pathfinder-ai" target="_blank">github.com/pathfinder-ai ↗</a>
+      </div>
+
+      <div class="proj">
+        <div class="proj-top">
+          <div class="proj-name">ShopEasy</div>
+          <span class="tag js">JS</span>
+        </div>
+        <div class="proj-desc">JavaScript e-commerce style web application.</div>
+        <a class="proj-link" href="https://github.com/vijayvicky1321-cmd/ShopEasy" target="_blank">github.com/ShopEasy ↗</a>
+      </div>
+
+      <div class="proj">
+        <div class="proj-top">
+          <div class="proj-name">daily-saver-calculator</div>
+          <span class="tag html">HTML</span>
+        </div>
+        <div class="proj-desc">Lightweight calculator app for tracking daily savings.</div>
+        <a class="proj-link" href="https://github.com/vijayvicky1321-cmd/daily-saver-calculator" target="_blank">github.com/daily-saver-calculator ↗</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="contact" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="sec-label">05 / Contact</div>
+    <h2>Let's talk</h2>
+    <div class="contact-grid">
+      <div class="contact-item"><div class="k">Email</div>dvijaykumar2128@gmail.com</div>
+      <div class="contact-item"><div class="k">Phone</div>+91 9059067422</div>
+      <div class="contact-item"><div class="k">Location</div>Hyderabad, Andhra Pradesh, India</div>
+      <div class="contact-item"><div class="k">GitHub</div><a href="https://github.com/vijayvicky1321-cmd" target="_blank">vijayvicky1321-cmd ↗</a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  &copy; 2026 Vijaykumar D — built for HR &amp; interviewers to review directly.
+</footer>
+
+</body>
+</html>
